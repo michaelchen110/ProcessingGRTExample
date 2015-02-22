@@ -34,7 +34,7 @@ boolean allowScreenController = false;
 
 //Set the pipeline mode (CLASSIFICATION_MODE or REGRESSION_MODE), the number of inputs and the number of outputs
 final int pipelineMode = GRT.CLASSIFICATION_MODE;
-final int numInputs = 2;
+final int numInputs = 14;
 final int numOutputs = 1;
 
 //Create a new GRT instance, this will initalize everything for us and send the setup message to the GRT GUI
@@ -100,11 +100,6 @@ void draw() {
         
       //Draw the info text
       grt.drawInfoText(20,20);
-  
-      //Grab the mouse data and send it to the GRT backend via OSC
-      data[0] = joints[KinectPV2.JointType_HandRight].getX();
-      data[1] = joints[KinectPV2.JointType_HandRight].getY();
-      grt.sendData( data );
       
       //draw different color for each hand state
       drawHandState(joints[KinectPV2.JointType_HandRight]);
@@ -121,6 +116,22 @@ void draw() {
       //Grab the mouse data and send it to the GRT backend via OSC
       data[0] = joints[KinectPV2.JointType_HandRight].getX();
       data[1] = joints[KinectPV2.JointType_HandRight].getY();
+      data[2] = joints[KinectPV2.JointType_HandRight].getZ();
+      data[3] = joints[KinectPV2.JointType_HandLeft].getX();
+      data[4] = joints[KinectPV2.JointType_HandLeft].getY();
+      data[5] = joints[KinectPV2.JointType_HandLeft].getZ();
+
+      data[6] = joints[KinectPV2.JointType_ElbowRight].getX();
+      data[7] = joints[KinectPV2.JointType_ElbowRight].getY();
+ 
+      data[8] = joints[KinectPV2.JointType_ElbowLeft].getX();
+      data[9] = joints[KinectPV2.JointType_ElbowLeft].getY();
+
+      data[10] = joints[KinectPV2.JointType_KneeRight].getX();
+      data[11] = joints[KinectPV2.JointType_KneeRight].getY();
+ 
+      data[12] = joints[KinectPV2.JointType_KneeLeft].getX();
+      data[13] = joints[KinectPV2.JointType_KneeLeft].getY();
       grt.sendData( data );
     }
   }
@@ -261,115 +272,7 @@ void handState(int handState) {
 
 //getPredictedClassLabel()
 
-void mouseMoved() {
-  if (allowScreenController == true){
-          if(grt.getPredictedClassLabel()==1){
-                  keyValue = "UP";
-                  ardrone.forward(20); // go forward
-          }
-          else if(grt.getPredictedClassLabel()==2){
-                  keyValue = "RIGHT";
-                  ardrone.goRight(20); // go right
-          }
-          else if(grt.getPredictedClassLabel()==3){
-                  keyValue = "DOWN";
-                  ardrone.backward(20); // go backward
-          }
-          else if(grt.getPredictedClassLabel()==4){
-                  keyValue = "LEFT";
-                  ardrone.goLeft(20); // go left
-          }
-          else if(grt.getPredictedClassLabel()==5){
-                  ardrone.takeOff(); // take off, AR.Drone cannot move while landing
-          }
-          else if(grt.getPredictedClassLabel()==6){
-                  ardrone.landing();
-          }
-          else if(grt.getPredictedClassLabel()==7){
-                  nowTime = System.currentTimeMillis() / 1000;
-                  try {
-                    if (keyValue == "UP") {
-                      ardrone.backward(100);
-                    }
-                    else if (keyValue == "DOWN") {
-                      ardrone.forward(100);
-                    }
-                    else if (keyValue == "LEFT") {
-                      ardrone.goRight(100);
-                    }
-                    else if (keyValue == "RIGHT") {
-                      ardrone.goLeft(100);
-                    }
-                    else {
-                      preTime = nowTime;
-                    } 
-                    Thread.sleep((nowTime-preTime)*300);
-                    keyValue = "";
-                  } catch (Exception e) {}
-              
-                  ardrone.stop(); // hovering
-        
-        
-          }
-  }
-}
-
 void keyPressed() {
- if (key == CODED) {
-    preTime = System.currentTimeMillis() / 1000;
-    if (keyCode == UP) {
-      keyValue = "UP";
-      ardrone.forward(20); // go forward
-    } 
-    else if (keyCode == DOWN) {
-      keyValue = "DOWN";
-      ardrone.backward(20); // go backward
-    } 
-    else if (keyCode == LEFT) {
-      keyValue = "LEFT";
-      ardrone.goLeft(20); // go left
-    } 
-    else if (keyCode == RIGHT) {
-      keyValue = "RIGHT";
-      ardrone.goRight(20); // go right
-    } 
-    else if (keyCode == SHIFT) {
-      ardrone.takeOff(); // take off, AR.Drone cannot move while landing
-    } 
-    else if (keyCode == CONTROL) {
-      ardrone.landing();
-      // landing
-    }
-  } 
-else {
-  if (key == 's') {
-    nowTime = System.currentTimeMillis() / 1000;
-
-    try {
-      if (keyValue == "UP") {
-        ardrone.backward(100);
-      }
-      else if (keyValue == "DOWN") {
-        ardrone.forward(100);
-      }
-      else if (keyValue == "LEFT") {
-        ardrone.goRight(100);
-      }
-      else if (keyValue == "RIGHT") {
-        ardrone.goLeft(100);
-      }
-      else {
-        preTime = nowTime;
-      } 
-      Thread.sleep((nowTime-preTime)*300);
-      keyValue = "";
-    } catch (Exception e) {}
-
-    ardrone.stop(); // hovering
-  }
-  } 
-
-  
   switch( key ){
     case '0':
       allowScreenController = true;
@@ -416,5 +319,4 @@ else {
     default:
       break;
   }
-  
 }
