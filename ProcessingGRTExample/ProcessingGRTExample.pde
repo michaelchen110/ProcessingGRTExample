@@ -27,6 +27,8 @@ ARDroneForP5 ardrone;
 String keyValue="";
 long preTime = 0;
 long nowTime = 0;
+boolean moving = false;
+boolean open = false;
 boolean allowScreenController = false;
 //by puching
 
@@ -60,15 +62,15 @@ void setup() {
   kinect.init();
   
   //by puching
-//  ardrone=new ARDroneForP5("192.168.1.1", ARDroneVersion.ARDRONE2);
-//  // connect to the AR.Drone
-//  ardrone.connect();
-//  // for getting sensor information
-//  ardrone.connectNav();
-//  // for getting video informationp
-//  ardrone.connectVideo();
-//  // start to control AR.Drone and get sensor and video data of it
-//  ardrone.start();
+  ardrone=new ARDroneForP5("192.168.1.1", ARDroneVersion.ARDRONE2);
+  // connect to the AR.Drone
+  ardrone.connect();
+  // for getting sensor information
+  ardrone.connectNav();
+  // for getting video informationp
+  ardrone.connectVideo();
+  // start to control AR.Drone and get sensor and video data of it
+  ardrone.start();
   //by puching
 }
 
@@ -94,9 +96,9 @@ void draw() {
   for (int i = 0; i < skeleton.length; i++) {
     if (skeleton[i].isTracked()) {
       KJoint[] joints = skeleton[i].getJoints();
-      print(Float.toString(joints[KinectPV2.JointType_HandRight].getX()) + " ");
-      print(Float.toString(joints[KinectPV2.JointType_HandRight].getY()) + " ");
-      println(Float.toString(joints[KinectPV2.JointType_HandRight].getZ()));
+      // print(Float.toString(joints[KinectPV2.JointType_HandRight].getX()) + " ");
+      // print(Float.toString(joints[KinectPV2.JointType_HandRight].getY()) + " ");
+      // println(Float.toString(joints[KinectPV2.JointType_HandRight].getZ()));
         
       //Draw the info text
       grt.drawInfoText(20,20);
@@ -140,34 +142,111 @@ void draw() {
 
   fill(255, 0, 0);
   text(frameRate, 50, 50);
-
+  
+  if(open){
+    if (grt.getPredictedClassLabel()==1) {
+      print("stop\n");
+      nowTime = System.currentTimeMillis() / 1000;
+      try {
+        if (keyValue.equals("UP")) {
+          ardrone.backward(100);
+        }
+        else if (keyValue.equals("DOWN")) {
+          ardrone.forward(100);
+        }
+        else if (keyValue.equals("LEFT")) {
+          ardrone.goRight(100);
+        }
+        else if (keyValue.equals("RIGHT")) {
+          ardrone.goLeft(100);
+        }
+        else {
+          preTime = nowTime;
+        } 
+        Thread.sleep((nowTime-preTime)*300);
+        keyValue = "";
+      } catch (Exception e) {}
+      
+      ardrone.stop();
+    }
+    else if (grt.getPredictedClassLabel()==2) {
+      print("take off\n");
+      ardrone.takeOff();
+    }
+    else if (grt.getPredictedClassLabel()==3) {
+      print("landing\n");
+      ardrone.landing();
+    }
+    else if (grt.getPredictedClassLabel()==4) {
+      print("up\n");
+      ardrone.up(100); 
+    }
+    else if (grt.getPredictedClassLabel()==5) {
+      print("down\n");
+      ardrone.down(100);
+    }
+    else if (grt.getPredictedClassLabel()==6) {
+      print("forward\n");
+      ardrone.forward(linearSpeed());
+    }
+    else if (grt.getPredictedClassLabel()==7) {
+      print("backward\n");
+      ardrone.backward(linearSpeed());
+    }
+    else if (grt.getPredictedClassLabel()==8) {
+      print("left\n");
+      ardrone.goLeft(linearSpeed());
+    }
+    else if (grt.getPredictedClassLabel()==9) {
+      print("right\n");
+      ardrone.goRight(linearSpeed());
+    }
+  }
   //by puching
 
-//  PImage img = ardrone.getVideoImage(false);
-//  if (img == null)
-//    return;
-//  image(img, 20, 450);
-//
-//  // print out AR.Drone information
-////  ardrone.printARDroneInfo();
-//
-//  // getting sensor information of AR.Drone
-//  float pitch = ardrone.getPitch();
-//  float roll = ardrone.getRoll();
-//  float yaw = ardrone.getYaw();
-//  float altitude = ardrone.getAltitude();
-//  float[] velocity = ardrone.getVelocity();
-//  int battery = ardrone.getBatteryPercentage();
-//
-//  String attitude = "pitch:" + pitch + "\nroll:" + roll + "\nyaw:" + yaw + "\naltitude:" + altitude;
-//  text(attitude, 20, 485);
-//  String vel = "vx:" + velocity[0] + "\nvy:" + velocity[1];
-//  text(vel, 20, 570);
-//  String bat = "battery:" + battery + " %";
-//  text(bat, 20, 620);
+  PImage img = ardrone.getVideoImage(false);
+  if (img == null)
+    return;
+  image(img, 400, 450);
+
+  // print out AR.Drone information
+//  ardrone.printARDroneInfo();
+
+  // getting sensor information of AR.Drone
+  float pitch = ardrone.getPitch();
+  float roll = ardrone.getRoll();
+  float yaw = ardrone.getYaw();
+  float altitude = ardrone.getAltitude();
+  float[] velocity = ardrone.getVelocity();
+  int battery = ardrone.getBatteryPercentage();
+
+  String attitude = "pitch:" + pitch + "\nroll:" + roll + "\nyaw:" + yaw + "\naltitude:" + altitude;
+  text(attitude, 20, 485);
+  String vel = "vx:" + velocity[0] + "\nvy:" + velocity[1];
+  text(vel, 20, 570);
+  String bat = "battery:" + battery + " %";
+  text(bat, 20, 620);
   //by puching
 
 }
+
+int linearSpeed() {
+  long deltaTime = System.currentTimeMillis()/1000 - preTime;
+  if (deltaTime < 2) {
+    return int(deltaTime)*5+20;
+    // return int(deltaTime)*3+20;
+  }
+  else {
+    return 30;
+  }
+}
+
+void move(String s){
+  keyValue = s;
+  moving = true;
+  preTime = System.currentTimeMillis() / 1000;
+}
+
 //use different color for each skeleton tracked
 color getIndexColor(int index) {
   color col = color(255);
@@ -273,6 +352,84 @@ void handState(int handState) {
 //getPredictedClassLabel()
 
 void keyPressed() {
+  if (key == CODED) {
+    // preKeyCode = keyCode;
+    if (keyCode == UP) {
+      keyValue = "UP";
+      ardrone.forward(20);
+    } 
+    else if (keyCode == DOWN) {
+      keyValue = "DOWN";
+      ardrone.backward(20);
+    } 
+    else if (keyCode == LEFT) {
+      keyValue = "LEFT";
+      ardrone.goLeft(20);
+    } 
+    else if (keyCode == RIGHT) {
+      keyValue = "RIGHT";
+      ardrone.goRight(20);
+    } 
+    else if (keyCode == SHIFT) {
+      moving = false;
+      ardrone.takeOff(); // take off, AR.Drone cannot move while landing
+      keyValue = "";
+    } 
+    else if (keyCode == CONTROL) {
+      moving = false;
+      ardrone.landing();
+      keyValue = "";
+      // landing
+    }
+  } 
+  else {
+    // preKey = key;
+    if (key == 's') {
+      nowTime = System.currentTimeMillis() / 1000;
+      try {
+        if (keyValue.equals("UP")) {
+          ardrone.backward(100);
+        }
+        else if (keyValue.equals("DOWN")) {
+          ardrone.forward(100);
+        }
+        else if (keyValue.equals("LEFT")) {
+          ardrone.goRight(100);
+        }
+        else if (keyValue.equals("RIGHT")) {
+          ardrone.goLeft(100);
+        }
+        else {
+          preTime = nowTime;
+        } 
+        Thread.sleep((nowTime-preTime)*300);
+        keyValue = "";
+      } catch (Exception e) {}
+      
+      ardrone.stop(); // hovering
+
+ 
+    }
+       
+    else {
+      keyValue = "";
+      if (key == 'r') {
+        // moving = true;
+        ardrone.spinRight(); // spin right
+      } 
+      else if (key == 'e') {  
+        // moving = true;
+        ardrone.spinLeft(); // spin left
+      } 
+      else if (key == 't') {
+        ardrone.up(100); // go up
+      }
+      else if (key == 'g') {
+        ardrone.down(100); // go down
+      }
+    }
+    
+  }
   switch( key ){
     case '0':
       allowScreenController = true;
@@ -307,7 +464,7 @@ void keyPressed() {
       grt.sendTargetVector( targetVector );
     break;
     case '}': //Increase the target vector value by 0.1 (only for REGRESSION_MODE)
-      targetVector[0] += 0.1;
+      targetVector[0] += 0.1;  
       grt.sendTargetVector( targetVector );
     break;
     case '1': //Set the classifier as ANBC, enable scaling, enable null rejection, and set the null rejection coeff to 5.0
@@ -315,6 +472,12 @@ void keyPressed() {
     break;
     case '2'://Set the classifier as ADABOOST, enable scaling, disable null rejection, and set the null rejection coeff to 5.0
       grt.setClassifier( grt.ADABOOST, true, false, 5.0 );
+    break;
+    case 'o':
+      if(!open)
+        open = true;
+      else if(open)
+        open = false;
     break;
     default:
       break;
